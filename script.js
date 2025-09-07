@@ -1,97 +1,62 @@
-// 强制横屏
-function forceOrientation() {
-    if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('landscape').catch(() => {
-            // 如果无法锁定屏幕方向，使用CSS transform
-            document.body.style.transform = 'rotate(90deg)';
-            document.body.style.transformOrigin = 'center center';
-        });
+// 创建粒子背景
+function createParticles() {
+    const particlesContainer = document.createElement('div');
+    particlesContainer.className = 'particles';
+    document.body.appendChild(particlesContainer);
+
+    for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 20 + 's';
+        particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+        particlesContainer.appendChild(particle);
     }
 }
 
-// 页面加载完成后执行
-document.addEventListener('DOMContentLoaded', function() {
-    forceOrientation();
-    initParticles();
-    initScrollEffects();
-    initSoundEffects();
-    initGestureRecognition();
-    initFineGrainedEditing();
-    loadComments();
-});
+// 页面加载动画
+function showLoadingAnimation() {
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'loading-overlay';
+    loadingOverlay.innerHTML = '<div class="loading-text">✨ 加州之旅即将开始 ✨</div>';
+    document.body.appendChild(loadingOverlay);
 
-// 粒子系统
-function initParticles() {
-    const canvas = document.createElement('canvas');
-    canvas.id = 'particles';
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '1';
-    document.body.appendChild(canvas);
+    setTimeout(() => {
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+            loadingOverlay.remove();
+        }, 500);
+    }, 2000);
+}
 
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles = [];
-    const particleCount = 50;
-
-    for (let i = 0; i < particleCount; i++) {
-        particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            size: Math.random() * 3 + 1,
-            opacity: Math.random() * 0.5 + 0.2
-        });
-    }
-
-    function animateParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+// 视差滚动效果
+function initParallax() {
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll('.section-illustration');
         
-        particles.forEach(particle => {
-            particle.x += particle.vx;
-            particle.y += particle.vy;
-
-            if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-            if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
-
-            ctx.beginPath();
-            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 183, 77, ${particle.opacity})`;
-            ctx.fill();
+        parallaxElements.forEach((element, index) => {
+            const speed = 0.5 + (index * 0.1);
+            element.style.transform = `translateY(${scrolled * speed}px) rotate(${scrolled * 0.1}deg)`;
         });
-
-        requestAnimationFrame(animateParticles);
-    }
-
-    animateParticles();
-
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
     });
 }
 
-// 滚动视差效果
-function initScrollEffects() {
-    const sections = document.querySelectorAll('.day-section');
-    
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        
-        sections.forEach((section, index) => {
-            const rate = scrolled * -0.5;
-            const illustration = section.querySelector('.section-illustration');
-            if (illustration) {
-                illustration.style.transform = `translateY(${rate * 0.3}px)`;
+// 动态文字效果
+function initTextAnimations() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const text = entry.target;
+                text.style.animation = 'none';
+                text.offsetHeight; // 触发重排
+                text.style.animation = 'slideInUp 0.8s ease-out forwards';
             }
         });
+    });
+
+    document.querySelectorAll('.day-header h2, .activity h3').forEach(el => {
+        observer.observe(el);
     });
 }
 
@@ -116,97 +81,165 @@ function initSoundEffects() {
         oscillator.stop(audioContext.currentTime + duration);
     }
 
-    document.querySelectorAll('.timeline-item').forEach(item => {
-        item.addEventListener('click', () => {
-            playTone(440, 0.2);
-        });
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('button, .nav-links a')) {
+            playTone(800, 0.1);
+        }
     });
+}
 
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            playTone(660, 0.1);
+// 智能提示系统
+function initSmartTooltips() {
+    const tooltips = {
+        '.edit-btn': '点击编辑行程安排',
+        '.comment-input': '分享你的旅行想法',
+        '.nav-links a': '快速跳转到对应行程',
+        '.icon-item': '加州元素，点击有惊喜！'
+    };
+
+    Object.entries(tooltips).forEach(([selector, text]) => {
+        document.querySelectorAll(selector).forEach(element => {
+            element.addEventListener('mouseenter', (e) => {
+                const tooltip = document.createElement('div');
+                tooltip.textContent = text;
+                tooltip.style.cssText = `
+                    position: absolute;
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    z-index: 1000;
+                    pointer-events: none;
+                    white-space: nowrap;
+                `;
+                
+                document.body.appendChild(tooltip);
+                
+                const rect = e.target.getBoundingClientRect();
+                tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px';
+                tooltip.style.top = rect.top - tooltip.offsetHeight - 8 + 'px';
+                
+                e.target._tooltip = tooltip;
+            });
+            
+            element.addEventListener('mouseleave', (e) => {
+                if (e.target._tooltip) {
+                    e.target._tooltip.remove();
+                    delete e.target._tooltip;
+                }
+            });
         });
     });
 }
 
 // 手势识别
 function initGestureRecognition() {
-    let startY = 0;
-    let startTime = 0;
-
+    let startX, startY, startTime;
+    
     document.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         startTime = Date.now();
     });
-
+    
     document.addEventListener('touchend', (e) => {
+        if (!startX || !startY) return;
+        
+        const endX = e.changedTouches[0].clientX;
         const endY = e.changedTouches[0].clientY;
         const endTime = Date.now();
-        const deltaY = startY - endY;
-        const deltaTime = endTime - startTime;
-
-        if (Math.abs(deltaY) > 50 && deltaTime < 300) {
-            if (deltaY > 0) {
-                // 向上滑动
-                const nextSection = document.querySelector('.day-section:not(.viewed)');
-                if (nextSection) {
-                    nextSection.scrollIntoView({ behavior: 'smooth' });
-                    nextSection.classList.add('viewed');
+        
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+        const diffTime = endTime - startTime;
+        
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50 && diffTime < 300) {
+            const sections = document.querySelectorAll('.day-section');
+            const currentSection = Array.from(sections).find(section => {
+                const rect = section.getBoundingClientRect();
+                return rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2;
+            });
+            
+            if (currentSection) {
+                const currentIndex = Array.from(sections).indexOf(currentSection);
+                const nextIndex = diffX > 0 ? currentIndex + 1 : currentIndex - 1;
+                
+                if (sections[nextIndex]) {
+                    sections[nextIndex].scrollIntoView({ behavior: 'smooth' });
                 }
-            } else {
-                // 向下滑动
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
     });
 }
 
-// 精细化编辑系统
-function initFineGrainedEditing() {
+// 转换活动内容为可编辑格式
+function convertToEditableFormat() {
     document.querySelectorAll('.activity-content').forEach(content => {
-        content.addEventListener('click', (e) => {
-            if (e.target.tagName === 'STRONG' || e.target.parentElement.tagName === 'STRONG') {
-                e.stopPropagation();
-                editTimeSlot(e.target.tagName === 'STRONG' ? e.target : e.target.parentElement);
-            }
+        const html = content.innerHTML;
+        const items = html.split('<br>').filter(item => item.trim());
+        
+        const itemsContainer = document.createElement('div');
+        itemsContainer.className = 'activity-items';
+        
+        items.forEach((item, index) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'activity-item';
+            itemDiv.innerHTML = `
+                <div class="item-content">${item}</div>
+                <div class="item-controls">
+                    <button onclick="editItem(this)" title="编辑">✏️</button>
+                    <button onclick="deleteItem(this)" title="删除">🗑️</button>
+                </div>
+            `;
+            itemsContainer.appendChild(itemDiv);
         });
+        
+        const addButton = document.createElement('button');
+        addButton.className = 'add-item-btn';
+        addButton.innerHTML = '➕ 添加行程';
+        addButton.onclick = () => addNewItem(itemsContainer);
+        
+        content.innerHTML = '';
+        content.appendChild(itemsContainer);
+        content.appendChild(addButton);
     });
 }
 
-function editTimeSlot(element) {
-    const originalText = element.textContent;
+// 编辑单个行程项
+function editItem(button) {
+    const itemDiv = button.closest('.activity-item');
+    const contentDiv = itemDiv.querySelector('.item-content');
+    const currentText = contentDiv.textContent;
+    
     const input = document.createElement('input');
     input.type = 'text';
-    input.value = originalText;
-    input.className = 'inline-edit';
+    input.value = currentText;
+    input.className = 'item-edit-input';
     input.style.cssText = `
-        background: rgba(255, 255, 255, 0.9);
-        border: 2px solid #ff6b35;
-        border-radius: 4px;
-        padding: 2px 6px;
-        font-weight: bold;
-        font-size: inherit;
-        width: auto;
-        min-width: 80px;
+        width: 100%;
+        padding: 8px;
+        border: 2px solid var(--california-sunset);
+        border-radius: 8px;
+        font-size: 14px;
+        background: rgba(255,255,255,0.9);
     `;
-
-    element.replaceWith(input);
+    
+    contentDiv.innerHTML = '';
+    contentDiv.appendChild(input);
     input.focus();
-    input.select();
-
-    function saveEdit() {
-        const newElement = document.createElement('strong');
-        newElement.textContent = input.value || originalText;
-        input.replaceWith(newElement);
-        saveToLocalStorage();
-        
-        // 重新绑定事件
-        newElement.addEventListener('click', (e) => {
-            e.stopPropagation();
-            editTimeSlot(newElement);
-        });
-    }
-
+    
+    const saveEdit = () => {
+        const newText = input.value.trim();
+        if (newText) {
+            contentDiv.innerHTML = newText;
+            saveToLocalStorage();
+            showNotification('✅ 已保存！', 'success');
+        } else {
+            contentDiv.innerHTML = currentText;
+        }
+    };
+    
     input.addEventListener('blur', saveEdit);
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -215,137 +248,409 @@ function editTimeSlot(element) {
     });
 }
 
-function editActivity(button) {
-    const activity = button.closest('.activity');
-    const content = activity.querySelector('.activity-content');
-    const originalHTML = content.innerHTML;
-
-    const textarea = document.createElement('textarea');
-    textarea.value = content.textContent;
-    textarea.className = 'edit-textarea';
-    textarea.style.cssText = `
-        width: 100%;
-        min-height: 150px;
-        padding: 15px;
-        border: 2px solid #ff6b35;
-        border-radius: 10px;
-        font-family: inherit;
-        font-size: 14px;
-        line-height: 1.6;
-        background: rgba(255, 255, 255, 0.95);
-        resize: vertical;
-    `;
-
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = '保存';
-    saveBtn.className = 'save-btn';
-    saveBtn.style.cssText = `
-        background: linear-gradient(135deg, #ff6b35, #f7931e);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 20px;
-        margin: 10px 5px 0 0;
-        cursor: pointer;
-        font-weight: 500;
-    `;
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = '取消';
-    cancelBtn.className = 'cancel-btn';
-    cancelBtn.style.cssText = `
-        background: #666;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 20px;
-        margin: 10px 0 0 0;
-        cursor: pointer;
-        font-weight: 500;
-    `;
-
-    content.innerHTML = '';
-    content.appendChild(textarea);
-    content.appendChild(saveBtn);
-    content.appendChild(cancelBtn);
-
-    textarea.focus();
-
-    saveBtn.addEventListener('click', () => {
-        const lines = textarea.value.split('\n');
-        let newHTML = '';
-        
-        lines.forEach(line => {
-            line = line.trim();
-            if (line) {
-                if (line.includes('：') || line.includes(':')) {
-                    const parts = line.split(/[：:]/);
-                    if (parts.length >= 2) {
-                        newHTML += `<strong>${parts[0]}：</strong> ${parts.slice(1).join('：')}<br>`;
-                    } else {
-                        newHTML += `${line}<br>`;
-                    }
-                } else {
-                    newHTML += `${line}<br>`;
-                }
-            }
-        });
-        
-        content.innerHTML = newHTML;
+// 删除行程项
+function deleteItem(button) {
+    const itemDiv = button.closest('.activity-item');
+    itemDiv.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => {
+        itemDiv.remove();
         saveToLocalStorage();
-        initFineGrainedEditing();
-    });
+        showNotification('🗑️ 已删除！', 'info');
+    }, 300);
+}
 
-    cancelBtn.addEventListener('click', () => {
-        content.innerHTML = originalHTML;
-        initFineGrainedEditing();
+// 添加新行程项
+function addNewItem(container) {
+    const newItem = document.createElement('div');
+    newItem.className = 'activity-item';
+    newItem.innerHTML = `
+        <div class="item-content">
+            <input type="text" placeholder="输入新的行程安排..." class="item-edit-input" style="
+                width: 100%;
+                padding: 8px;
+                border: 2px solid var(--california-sunset);
+                border-radius: 8px;
+                font-size: 14px;
+                background: rgba(255,255,255,0.9);
+            ">
+        </div>
+        <div class="item-controls">
+            <button onclick="editItem(this)" title="编辑">✏️</button>
+            <button onclick="deleteItem(this)" title="删除">🗑️</button>
+        </div>
+    `;
+    
+    container.appendChild(newItem);
+    const input = newItem.querySelector('input');
+    input.focus();
+    
+    const saveNew = () => {
+        const text = input.value.trim();
+        if (text) {
+            newItem.querySelector('.item-content').innerHTML = text;
+            saveToLocalStorage();
+            showNotification('➕ 已添加！', 'success');
+        } else {
+            newItem.remove();
+        }
+    };
+    
+    input.addEventListener('blur', saveNew);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveNew();
+        }
     });
 }
 
+// 主初始化函数
+document.addEventListener('DOMContentLoaded', function() {
+    showLoadingAnimation();
+    createParticles();
+    
+    setTimeout(() => {
+        initParallax();
+        initTextAnimations();
+        initSmartTooltips();
+        initGestureRecognition();
+        
+        // 转换为可编辑格式
+        convertToEditableFormat();
+        
+        document.addEventListener('click', initSoundEffects, { once: true });
+    }, 2500);
+
+    // 平滑滚动导航
+    const navLinks = document.querySelectorAll('.nav-links a');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
+            
+            if (targetSection) {
+                targetSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // 滚动时高亮当前导航项
+    const sections = document.querySelectorAll('.day-section');
+    const navItems = document.querySelectorAll('.nav-links a');
+
+    function highlightNavigation() {
+        let current = '';
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            
+            if (window.pageYOffset >= sectionTop - 200) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('href') === `#${current}`) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', highlightNavigation);
+
+    // 滚动动画观察器
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                entry.target.classList.add('sparkle');
+            }
+        });
+    }, observerOptions);
+
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    
+    timelineItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(50px)';
+        item.style.transition = `opacity 0.8s ease ${index * 0.2}s, transform 0.8s ease ${index * 0.2}s`;
+        observer.observe(item);
+    });
+
+    // 添加活跃导航样式
+    const style = document.createElement('style');
+    style.textContent = `
+        .nav-links a.active {
+            background: var(--california-sunset) !important;
+            color: white !important;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(255,107,107,0.4);
+        }
+        
+        .activity-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .activity-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+        
+        .item-content {
+            flex: 1;
+        }
+        
+        .item-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .item-controls button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .item-controls button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.2);
+        }
+        
+        .add-item-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--california-sunset), var(--ocean-blue));
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .add-item-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255,107,107,0.3);
+        }
+        
+        @keyframes slideOut {
+            to {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 图标点击特效
+    document.querySelectorAll('.icon-item').forEach(icon => {
+        icon.addEventListener('click', function() {
+            for (let i = 0; i < 12; i++) {
+                const spark = document.createElement('div');
+                spark.textContent = '✨';
+                spark.style.cssText = `
+                    position: fixed;
+                    pointer-events: none;
+                    z-index: 1000;
+                    font-size: 20px;
+                    left: ${this.getBoundingClientRect().left + this.offsetWidth/2}px;
+                    top: ${this.getBoundingClientRect().top + this.offsetHeight/2}px;
+                `;
+                
+                document.body.appendChild(spark);
+                
+                const angle = (i / 12) * Math.PI * 2;
+                const distance = 100;
+                const endX = Math.cos(angle) * distance;
+                const endY = Math.sin(angle) * distance;
+                
+                spark.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${endX}px, ${endY}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 1000,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }).onfinish = () => spark.remove();
+            }
+            
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 30, 50]);
+            }
+        });
+    });
+
+    loadSavedData();
+});
+
+// 添加评论功能
 function addComment(button) {
-    const input = button.previousElementSibling;
-    const commentText = input.value.trim();
+    const commentInput = button.previousElementSibling;
+    const commentText = commentInput.value.trim();
     
     if (commentText) {
         const commentsList = button.closest('.comments-section').querySelector('.comments-list');
         const comment = document.createElement('div');
         comment.className = 'comment';
-        comment.innerHTML = `
-            <span class="comment-text">${commentText}</span>
-            <span class="comment-time">${new Date().toLocaleString('zh-CN')}</span>
-            <button class="delete-comment" onclick="deleteComment(this)">×</button>
-        `;
+        comment.textContent = commentText;
         
         commentsList.appendChild(comment);
-        input.value = '';
+        commentInput.value = '';
+        
         saveToLocalStorage();
+        showNotification('💬 评论已添加！', 'info');
     }
 }
 
-function deleteComment(button) {
-    button.parentElement.remove();
-    saveToLocalStorage();
+// 通知系统
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 25px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        ${type === 'success' ? 'background: linear-gradient(135deg, #4caf50, #45a049);' : ''}
+        ${type === 'info' ? 'background: linear-gradient(135deg, #2196f3, #1976d2);' : ''}
+        ${type === 'error' ? 'background: linear-gradient(135deg, #f44336, #d32f2f);' : ''}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
+// 保存数据到本地存储
 function saveToLocalStorage() {
     const data = {
-        content: document.querySelector('main').innerHTML,
-        timestamp: Date.now()
+        activities: {},
+        comments: {}
     };
-    localStorage.setItem('californiaTrip', JSON.stringify(data));
+    
+    document.querySelectorAll('.timeline-item').forEach(item => {
+        const day = item.dataset.day;
+        const items = [];
+        item.querySelectorAll('.activity-item .item-content').forEach(content => {
+            items.push(content.textContent || content.innerHTML);
+        });
+        data.activities[day] = items;
+    });
+    
+    document.querySelectorAll('.timeline-item').forEach(item => {
+        const day = item.dataset.day;
+        const comments = [];
+        item.querySelectorAll('.comment').forEach(comment => {
+            comments.push(comment.textContent);
+        });
+        data.comments[day] = comments;
+    });
+    
+    localStorage.setItem('tripData', JSON.stringify(data));
 }
 
-function loadComments() {
-    const saved = localStorage.getItem('californiaTrip');
-    if (saved) {
-        try {
-            const data = JSON.parse(saved);
-            if (data.content) {
-                document.querySelector('main').innerHTML = data.content;
-                initFineGrainedEditing();
-            }
-        } catch (e) {
-            console.log('无法加载保存的数据');
+// 从本地存储加载数据
+function loadSavedData() {
+    const savedData = localStorage.getItem('tripData');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        
+        if (data.activities) {
+            Object.keys(data.activities).forEach(day => {
+                const item = document.querySelector(`[data-day="${day}"]`);
+                if (item) {
+                    const itemsContainer = item.querySelector('.activity-items');
+                    if (itemsContainer && data.activities[day]) {
+                        itemsContainer.innerHTML = '';
+                        data.activities[day].forEach(activityText => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'activity-item';
+                            itemDiv.innerHTML = `
+                                <div class="item-content">${activityText}</div>
+                                <div class="item-controls">
+                                    <button onclick="editItem(this)" title="编辑">✏️</button>
+                                    <button onclick="deleteItem(this)" title="删除">🗑️</button>
+                                </div>
+                            `;
+                            itemsContainer.appendChild(itemDiv);
+                        });
+                    }
+                }
+            });
+        }
+        
+        if (data.comments) {
+            Object.keys(data.comments).forEach(day => {
+                const item = document.querySelector(`[data-day="${day}"]`);
+                if (item) {
+                    const commentsList = item.querySelector('.comments-list');
+                    if (commentsList) {
+                        data.comments[day].forEach(commentText => {
+                            const comment = document.createElement('div');
+                            comment.className = 'comment';
+                            comment.textContent = commentText;
+                            commentsList.appendChild(comment);
+                        });
+                    }
+                }
+            });
         }
     }
+}
+
+// 回车键添加评论
+document.addEventListener('keypress', function(e) {
+    if (e.target.classList.contains('comment-input') && e.key === 'Enter') {
+        const button = e.target.nextElementSibling;
+        addComment(button);
+    }
+});
+
+// PWA支持
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => console.log('SW registered'))
+            .catch(error => console.log('SW registration failed'));
+    });
 }
